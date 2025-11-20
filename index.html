@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pendaftaran WiFi AKSENT~</title>
+
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: url("AS.jpg") no-repeat center center;
+      background-size: cover;
+      backdrop-filter: blur(3px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.85);
+      padding: 25px 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+      width: 100%;
+      max-width: 420px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #0b74a3;
+      font-weight: bold;
+    }
+
+    input, textarea, select, button {
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #0b74a3;
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #085d82;
+    }
+
+    label {
+      font-weight: 600;
+      display: block;
+      margin-top: 10px;
+      color: #003d57;
+    }
+
+    .total-box {
+      background: #e7f6ff;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      border: 1px solid #b5dcf3;
+      font-weight: 700;
+      color: #064c6e;
+    }
+  </style>
+
+</head>
+<body>
+
+  <div class="container">
+    <h2>Selamat Datang Di Pendaftaran WiFi<br><strong>~AKSENT~</strong></h2>
+
+    <form id="wifiForm">
+
+      <label>Tanggal Pendaftaran</label>
+      <input type="date" id="tanggal" required />
+
+      <label>Nama Lengkap</label>
+      <input type="text" id="nama" placeholder="Nama Lengkap" required />
+
+      <label>Alamat Pemasangan</label>
+      <input type="text" id="alamat" placeholder="Alamat Lengkap" required />
+
+      <label>Share Lokasi GPS</label>
+      <button type="button" onclick="ambilLokasi()">Ambil Lokasi</button>
+      <input type="text" id="lokasi" placeholder="Belum diambil" readonly />
+
+      <label>Nomor HP / WhatsApp</label>
+      <input type="text" id="nohp" placeholder="08xxxxxxx" required />
+
+      <label>Pilih Paket Internet</label>
+      <select id="paket" required onchange="hitungTotal()">
+        <option value="">-- Pilih Paket --</option>
+        <option value="150000">5 Mbps - Rp150.000</option>
+        <option value="170000">7 Mbps - Rp170.000</option>
+        <option value="200000">10 Mbps - Rp200.000</option>
+        <option value="250000">15 Mbps - Rp250.000</option>
+        <option value="300000">20 Mbps - Rp300.000</option>
+      </select>
+
+      <div class="total-box">
+        Total Biaya Pemasangan+Paket: <span id="total">Rp 0</span>
+      </div>
+
+      <label>Nama WiFi</label>
+      <input type="text" id="namawifi" placeholder="Contoh: Aksent_Rumah" required />
+
+      <label>Password WiFi</label>
+      <input type="text" id="passwordwifi" placeholder="Minimal 8 karakter" required />
+
+      <label>Catatan</label>
+      <textarea id="catatan" placeholder="tinggalkan pesan untuk admin (opsional)"></textarea>
+
+      <label>
+        <input type="checkbox" id="setuju" required />
+        Saya setuju biaya pemasangan Rp 100.000 + biaya paket pilihan saya
+      </label>
+
+      <button type="submit">Kirim Pendaftaran</button>
+    </form>
+  </div>
+
+  <script>
+
+    const BOT_TOKEN = "8452985726:AAE8b38Fj0KPux8L19ZKzZL-Q72Q_sI_-7I";
+    const CHAT_ID = "1104563992";
+
+    document.getElementById("tanggal").value = new Date().toISOString().split("T")[0];
+
+    // Hitung Total Biaya
+    function formatRupiah(x) {
+      return "Rp " + x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function hitungTotal() {
+      const paket = document.getElementById("paket").value;
+      const instalasi = 100000;
+
+      if (paket === "") {
+        document.getElementById("total").innerText = "Rp 0";
+        return;
+      }
+
+      const total = parseInt(paket) + instalasi;
+      document.getElementById("total").innerText = formatRupiah(total);
+    }
+
+    // Ambil Lokasi GPS
+    function ambilLokasi() {
+      if (!navigator.geolocation) {
+        alert("Browser tidak mendukung GPS");
+        return;
+      }
+
+      alert("Mengambil lokasi...klik ok lalu klik allow/setuju di browser kamu");
+
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const lat = pos.coords.latitude.toFixed(6);
+          const lon = pos.coords.longitude.toFixed(6);
+          const lokasi = `https://maps.google.com/?q=${lat},${lon}`;
+          document.getElementById("lokasi").value = lokasi;
+          alert("Lokasi berhasil diambil");
+        },
+        err => {
+          alert("Gagal mengambil lokasi. Izinkan akses GPS");
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+    }
+
+    // Kirim ke Telegram
+    document.getElementById("wifiForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      if (!document.getElementById("setuju").checked) {
+        alert("Anda harus menyetujui biaya.");
+        return;
+      }
+
+      const tanggal = document.getElementById("tanggal").value;
+      const nama = document.getElementById("nama").value;
+      const alamat = document.getElementById("alamat").value;
+      const lokasi = document.getElementById("lokasi").value;
+      const nohp = document.getElementById("nohp").value;
+      const paketValue = document.getElementById("paket").value;
+      const paketLabel = document.getElementById("paket").selectedOptions[0].text;
+      const namawifi = document.getElementById("namawifi").value;
+      const passwordwifi = document.getElementById("passwordwifi").value;
+      const catatan = document.getElementById("catatan").value;
+      const totalBiaya = document.getElementById("total").innerText;
+
+      const text = `
+📡 *PENDAFTARAN WIFI AKSENT~*
+
+📅 Tanggal: ${tanggal}
+👤 Nama: ${nama}
+📍 Alamat: ${alamat}
+🌍 Lokasi GPS:
+${lokasi}
+📞 Nomor HP: ${nohp}
+⚡ Paket Dipilih:
+${paketLabel}
+💰 Total Biaya:
+${totalBiaya}
+📶 Nama WiFi: ${namawifi}
+🔐 Password WiFi: ${passwordwifi}
+📝 Catatan:
+${catatan}
+✅ Pelanggan setuju biaya pemasangan Rp 100.000
+`;
+
+      fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: text,
+          parse_mode: "Markdown"
+        })
+      })
+      .then(() => {
+        alert("Pendaftaran berhasil dikirim!");
+        document.getElementById("wifiForm").reset();
+        document.getElementById("total").innerText = "Rp 0";
+      })
+      .catch(() => {
+        alert("Gagal mengirim ke Telegram.");
+      });
+    });
+
+  </script>
+
+</body>
+</html>
